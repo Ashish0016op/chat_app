@@ -55,6 +55,15 @@
         .form input[type="submit"]:hover {
             background-color: #0056b3;
         }
+        button#signUpButton {
+            background-color: darkgray;
+            border-radius: 11px;
+            padding: 4px 12px;
+            font-size: 16px;
+        }
+        button#signUpButton:hover{
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -83,6 +92,9 @@
             </div>
             <div class="form">
                 <button type="submit" id="signUpButton">Sign Up</button>
+            </div>
+            <div class="alreadyAccount">
+                <h3>Already have an account?  <a href="/views/login.html" style="text-decoration: none;">Login</a></h3>
             </div>
             <div id="userExist" style="color: red;"></div>
         </form>
