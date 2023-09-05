@@ -105,10 +105,8 @@
                     password:password
                 }
                 const getSignUpDetails=await axios.get('http://localhost:5500/getSignUpDetails');
-                //console.log(getSignUpDetails);
                 let temp=false;
                 getSignUpDetails.data.signUpDetails.forEach(details=>{
-                    //console.log(details.Username);
                     if(details.Email===email){
                         temp=true;
                     }
@@ -118,6 +116,7 @@
                         userExist.textContent='user already exist';
                 }else{
                     const response=await axios.post('http://localhost:5500/signUp',obj);
+                    window.alert('successfully signed up')
                 }
             }catch(err){
                 console.log(err);
