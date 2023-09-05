@@ -16,7 +16,7 @@ const signUpTable=sequelize.define('signUpData',{
         allowNull:false,
     },
     PhoneNumber:{
-        type:Sequelize.INTEGER,
+        type:Sequelize.STRING,
         allowNull:false,
     },
     password:{

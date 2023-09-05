@@ -82,9 +82,47 @@
                 <input type="password" id="confirm_password" name="confirm_password" required>
             </div>
             <div class="form">
-                <input type="submit" value="Sign Up">
+                <button type="submit" id="signUpButton">Sign Up</button>
             </div>
+            <div id="userExist" style="color: red;"></div>
         </form>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const signUpButton=document.getElementById('signUpButton');
+        signUpButton.addEventListener('click',postSignUpData);
+        async function postSignUpData(e){
+            e.preventDefault();
+            try{
+                const email=document.getElementById('email').value;
+                const username=document.getElementById('username').value;
+                const PhoneNumber=document.getElementById('PhoneNumber').value;
+                const password=document.getElementById('password').value;
+                const obj={
+                    Username:username,
+                    Email:email,
+                    PhoneNumber:PhoneNumber,
+                    password:password
+                }
+                const getSignUpDetails=await axios.get('http://localhost:5500/getSignUpDetails');
+                //console.log(getSignUpDetails);
+                let temp=false;
+                getSignUpDetails.data.signUpDetails.forEach(details=>{
+                    //console.log(details.Username);
+                    if(details.Email===email){
+                        temp=true;
+                    }
+                })
+                if(temp===true){
+                    const userExist=document.getElementById('userExist');
+                        userExist.textContent='user already exist';
+                }else{
+                    const response=await axios.post('http://localhost:5500/signUp',obj);
+                }
+            }catch(err){
+                console.log(err);
+            }
+        }
+    </script>
 </body>
 </html>
