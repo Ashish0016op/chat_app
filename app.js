@@ -23,6 +23,9 @@ app.use('/signUp',(req,res,next)=>{
 app.use('/login',(req,res,next)=>{
     res.sendFile(path.join(__dirname,'views','login.html'))
 })
+app.use('/chat',(req,res,next)=>{
+    res.sendFile(path.join(__dirname,'views','chat.html'));
+})
 
 
 sequelize.sync({force:false})
