@@ -94,7 +94,7 @@
                 <button type="submit" id="signUpButton">Sign Up</button>
             </div>
             <div class="alreadyAccount">
-                <h3>Already have an account?  <a href="/views/login.html" style="text-decoration: none;">Login</a></h3>
+                <h3>Already have an account?  <a href="/login" style="text-decoration: none;">Login</a></h3>
             </div>
             <div id="userExist" style="color: red;"></div>
         </form>
@@ -129,6 +129,7 @@
                 }else{
                     const response=await axios.post('http://localhost:5500/signUp',obj);
                     window.alert('successfully signed up')
+                    window.location.href="/login";
                 }
             }catch(err){
                 console.log(err);
