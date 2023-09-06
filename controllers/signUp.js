@@ -1,5 +1,6 @@
 const bcrypt=require('bcrypt');
 const signUpTable=require('../model/signUp');
+const jwt=require('jsonwebtoken');
 exports.postSignUpDetails=async(req,res,next)=>{
     try{
         const name=req.body.Username;
@@ -28,6 +29,7 @@ exports.postSignUpDetails=async(req,res,next)=>{
 }
 exports.getSignUpDetails=async(req,res,next)=>{
     try{
+        
         const response=await signUpTable.findAll();
         res.status(200).json({signUpDetails:response});
     }catch(err){

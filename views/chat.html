@@ -45,27 +45,86 @@
         border-radius: 5px;
         cursor: pointer;
     }
+    ul {
+        list-style: none;
+        margin-left: 295px;
+        margin-right: 387px;
+    }
 </style>
 </head>
 <body>
     <h2 style="text-align: center;">Chat App</h2>
-    <div class="chatContainer"></div>
-    <div id="container">
+    <div class="chatContainer">
+        <ul id="chatDetails">
+            <p id="userJoined" style="background-color: #007BFF;">You joined</p>
+        </ul>
+    </div>
+    <form id="container" action="/chatData" method="POST">
         <input type="text" id="text-field">
         <button id="button">Submit</button>
-    </div>
+    </form>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        const button=document.getElementById('button');
+        button.addEventListener('click',showChat);
+        async function showChat(e){
+            e.preventDefault();
+            try{
+                const Nameresponse=await axios.get('http://localhost:5500/getSignUpDetails')
+                const email=localStorage.getItem('email');
+                let username;
+                Nameresponse.data.signUpDetails.forEach(element => {
+                    if(element.Email===email){
+                        const userJoined=document.getElementById('userJoined');
+                        userJoined.innerHTML='You joined';
+                        username=element.Username;
+                    }
+
+                });
+                const chat=document.getElementById('text-field').value;
+                const obj={
+                    Chat:chat,
+                    Username:username
+                }
+                const token=localStorage.getItem('token');
+                const response=await axios.post('http://localhost:5500/chatDetails',obj);
+                const chatData=document.getElementById('chatDetails');
+                const li=document.createElement('li');
+                li.innerHTML=username+": "+chat;
+                chatData.appendChild(li);
+                
+            }catch(err){
+                console.log(err);
+            }
+        }
         document.addEventListener('DOMContentLoaded',fetchData);
         async function fetchData(e){
             e.preventDefault();
             try{
+                
                 const response=await axios.get('http://localhost:5500/getSignUpDetails')
-                console.log(response.data.signUpDetails);
+                const email=localStorage.getItem('email');
+                let username;
                 response.data.signUpDetails.forEach(element => {
-                    console.log(element.Username)
-                    
+                    if(element.Email!==email){
+                        const chatDetails=document.getElementById('chatDetails');
+                        const li=document.createElement('li');
+                        li.innerHTML=`${element.Username} joined`;
+                        username=element.Username;
+                        li.style.backgroundColor='cornsilk'
+                        chatDetails.appendChild(li);
+                    }
+
                 });
+                const chatDetails=await axios.get('http://localhost:5500/userChat');
+                chatDetails.data.chatDetails.forEach(element=>{
+                    console.log(element.Username);
+                    const chatData=document.getElementById('chatDetails');
+                    const li=document.createElement('li');
+                    li.innerHTML=element.Username+": "+element.Chat;
+                    chatData.appendChild(li);
+                })
+                
             }catch(err){
                 console.log(err);
             }
