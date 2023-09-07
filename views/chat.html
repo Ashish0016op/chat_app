@@ -55,7 +55,10 @@
 <body>
     <h2 style="text-align: center;">Chat App</h2>
     <div class="chatContainer">
-        <p id="userJoined" style="background-color: #007BFF;margin-left: 334px;margin-right: 387px;">You joined</p>
+        <p id="userJoined1" style="background-color: #007BFF;margin-left: 334px;margin-right: 387px;">You joined</p>
+        <ul id="userJoined">
+
+        </ul>
         <ul id="chatDetails">
         </ul>
     </div>
@@ -73,21 +76,33 @@
                 const Nameresponse=await axios.get('http://localhost:5500/getSignUpDetails')
                 const email=localStorage.getItem('email');
                 let username;
+                
                 Nameresponse.data.signUpDetails.forEach(element => {
                     if(element.Email===email){
-                        const userJoined=document.getElementById('userJoined');
-                        userJoined.innerHTML='You joined';
                         username=element.Username;
                     }
 
                 });
+
                 const chat=document.getElementById('text-field').value;
+
                 const obj={
                     Chat:chat,
                     Username:username
                 }
                 const token=localStorage.getItem('token');
                 const response=await axios.post('http://localhost:5500/chatDetails',obj);
+                const getChat=await axios.get('http://localhost:5500/userChat')
+                const latestMessageId=Math.max(...getChat.data.chatDetails.map(element=>element.id))
+
+                const chatDataArray=JSON.parse(localStorage.getItem('chatDatas')) || [];
+                const data={
+                    "id":latestMessageId,
+                    "chat":chat,
+                    "username":username
+                }
+                chatDataArray.push(data);
+                localStorage.setItem('chatDatas',JSON.stringify(chatDataArray));
                 const chatData=document.getElementById('chatDetails');
                 const li=document.createElement('li');
                 li.innerHTML=username+": "+chat;
@@ -98,32 +113,77 @@
             }
         }
         
-        document.addEventListener('DOMContentLoaded',fetchData);
-        async function fetchData(){
+        document.addEventListener('DOMContentLoaded',showDataOnPage);
+        async function showDataOnPage(){
             try{
-                const response=await axios.get('http://localhost:5500/getSignUpDetails')
+                const Nameresponse=await axios.get('http://localhost:5500/getSignUpDetails')
                 const email=localStorage.getItem('email');
-                let username;
-                const chatData=document.getElementById('chatDetails');
-                chatData.innerHTML='';
-                response.data.signUpDetails.forEach(element => {
-                    if(element.Email!==email){
-                        const chatDetails=document.getElementById('chatDetails');
-                        const li=document.createElement('li');
-                        li.innerHTML=`${element.Username} joined`;
+                Nameresponse.data.signUpDetails.forEach(element => {
+                    if(element.Email===email){
+                        const userJoined1=document.getElementById('userJoined1');
+                        userJoined1.innerHTML='You joined';
                         username=element.Username;
-                        li.style.backgroundColor='cornsilk'
-                        chatDetails.appendChild(li);
+                    }else{
+                        const userJoined=document.getElementById('userJoined');
+                        const li=document.createElement('li');
+                        li.innerHTML=element.Username+" joined";
+                        console.log(li);
+                        userJoined.appendChild(li);
                     }
 
                 });
-                const chatDetails=await axios.get('http://localhost:5500/userChat');
-                chatDetails.data.chatDetails.forEach(element=>{
-                    const chatData=document.getElementById('chatDetails');
+                const chatData=document.getElementById('chatDetails')
+                const getChatDetails=await axios.get('http://localhost:5500/userChat');
+                    getChatDetails.data.chatDetails.forEach(element=>{
                     const li=document.createElement('li');
                     li.innerHTML=element.Username+": "+element.Chat;
                     chatData.appendChild(li);
                 })
+            }catch(err){
+                cosnole.log(err);
+            }
+        }
+        async function fetchData(){
+            try{
+                const chatData=document.getElementById('chatDetails')
+                const localStorageChat=localStorage.getItem('chatDatas');
+                if(localStorageChat){
+                    const parseLocalStorageChat=JSON.parse(localStorageChat);
+                    const getChat=await axios.get('http://localhost:5500/userChat')
+                    const latestMessageId=Math.max(...getChat.data.chatDetails.map(element=>element.id));
+                    const localStorageChatId=Math.max(...parseLocalStorageChat.map(element=>element.id));
+                    console.log("db",latestMessageId);
+                    console.log("lc",localStorageChatId);
+                    if(latestMessageId>localStorageChatId){
+                        console.log('hello')
+                        const getChatDetails1=await axios.get('http://localhost:5500/userChat');
+                        const newMessages = getChatDetails1.data.chatDetails.filter(
+                            element => element.id > localStorageChatId
+                        );
+                        newMessages.forEach(element=>{
+                            const chat=element.Chat;
+                            const username=element.Username;
+                            const id=element.id;
+                            const data={
+                                "chat":chat,
+                                "username":username,
+                                "id":id
+                            }
+                            parseLocalStorageChat.push(data);
+
+                        })
+                        localStorage.setItem('chatDatas', JSON.stringify(parseLocalStorageChat));
+                        
+                        console.log(localStorage.getItem('chatDatas'));
+                        parseLocalStorageChat.forEach(element=>{
+                            const li=document.createElement('li');
+                            li.innerHTML=element.username+": "+element.chat;
+                            chatData.appendChild(li);
+                        })
+
+                    }
+                }
+                
                 
             }catch(err){
                 console.log(err);
