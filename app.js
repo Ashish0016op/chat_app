@@ -9,16 +9,20 @@ const app=express();
 const signUpRoutes=require('./routes/signUp');
 const loginRoutes=require('./routes/login');
 const chatRoutes=require('./routes/chat');
+const groupRoutes=require('./routes/group');
 const { serialize } = require('v8');
 const { Sequelize } = require('sequelize');
-const signUpModel=require('./model/signUp');
+const UserModel=require('./model/signUp');
 const ChatModel=require('./model/chat');
+const groupModel=require('./model/group');
+const userGroupModel=require('./model/userGroup');
 app.use(cors());
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use(signUpRoutes);
 app.use(loginRoutes);
 app.use(chatRoutes);
+app.use(groupRoutes);
 
 app.use('/signUp',(req,res,next)=>{
     res.sendFile(path.join(__dirname,'views','SignUp.html'));
@@ -29,9 +33,28 @@ app.use('/login',(req,res,next)=>{
 app.use('/chat',(req,res,next)=>{
     res.sendFile(path.join(__dirname,'views','chat.html'));
 })
+app.use('/group',(req,res,next)=>{
+    res.sendFile(path.join(__dirname,'views','group.html'))
+})
+app.use('/invite',(req,res,next)=>{
+    res.sendFile(path.join(__dirname,'views','invite.html'));
+})
 
-// signUpModel.hasOne(ChatModel);
-// ChatModel.belongsTo(signUpModel);
+ChatModel.belongsTo(UserModel,{foreignKey:'userId'});
+UserModel.hasMany(ChatModel,{foreignKey:'userId'});
+
+ChatModel.belongsTo(groupModel,{foreignKey:'groupId'});
+groupModel.hasMany(ChatModel,{foreignKey:'groupId'});
+
+groupModel.belongsToMany(UserModel, {
+    through: userGroupModel,
+    foreignKey: 'groupId',
+  });
+  UserModel.belongsToMany(groupModel, {
+    through: userGroupModel,
+    foreignKey: 'userId',
+  });
+
 sequelize.sync({force:false})
 .then(()=>{
       console.log('data sync successfully');

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+    }
+
+    header {
+        background-color: #007BFF;
+        color: white;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .container {
+        display: flex;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .user-groups, .create-group {
+        margin-bottom: 20px;
+    }
+
+    .chat {
+        flex: 2;
+        margin-right: 224px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        margin: 0 0 20px;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    #text-field{
+        margin-top: 165px;
+    }
+    #groupName, #text-field {
+        width: 59%;
+        padding: 10px;
+        font-size: 16px;
+        border: 2px solid #007BFF;
+        border-radius: 5px;
+        outline: none;
+        margin-bottom: 10px;
+    }
+
+    #createButton, #button {
+        padding: 10px 20px;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    #createButton:hover, #button:hover {
+        background-color: #0056b3;
+    }
+
+    #chatDetails {
+        max-height: 400px;
+        overflow-y: scroll;
+    }
+</style>
+<body>
+    <header>
+        <h1>Chat App</h1>
+    </header>
+    <main class="container">
+        <section class="chat">
+            <div class="user-info">
+                <h2>Your Group</h2>
+                <h3>group name</h3>
+                <p id="userJoined1">You joined</p>
+                <ul id="userJoined">
+                </ul>
+            </div>
+            <div class="chat-messages">
+                <ul id="chatDetails">
+                </ul>
+                <form id="chatForm" action="/chatData" method="POST">
+                    <input type="text" id="text-field" placeholder="Type your message" required>
+                    <button type="submit" id="button">Send</button>
+                </form>
+            </div>
+        </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded',showMessages);
+        async function showMessages(){
+            try{
+                const Nameresponse=await axios.get('http://localhost:5500/getSignUpDetails')
+                const email=localStorage.getItem('email');
+                let username;
+                
+                Nameresponse.data.signUpDetails.forEach(element => {
+                    if(element.Email===email){
+                        const userJoined1=document.getElementById('userJoined1');
+                        userJoined1.innerHTML='You joined';
+                        username=element.Username;
+                    }else{
+                        const userJoined=document.getElementById('userJoined');
+                        const li=document.createElement('li');
+                        li.innerHTML=element.Username+" joined";
+                        console.log(li);
+                        userJoined.appendChild(li);
+                    }
+                });
+            }catch(e){
+                console.log(e);
+            }
+        }
+    </script>
+</body>
+</html>

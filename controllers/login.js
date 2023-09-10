@@ -12,13 +12,14 @@ exports.LoginData=async(req,res,next)=>{
         if(!response){
             return res.status(401).json({error:'invalid credentials'})
         }
-        console.log(response);
         const isPasswordValid=await bcrypt.compare(password,response.password);
         if(!isPasswordValid){
             return res.status(401).json({error:'invalid credentials'});
         }
         const token=generateAccessToken(response.id);
-        res.status(200).json({message:'login successful',token});
+        const userId=response.id;
+        const Username=response.Username;
+        res.status(200).json({message:'login successful',token,userId,Username});
 
     }catch(err){
         console.log(err);
