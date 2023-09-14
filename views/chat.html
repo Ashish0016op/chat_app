@@ -147,7 +147,6 @@
         <section class="chat">
             <div class="user-info">
                 <h3 id="userGroupName"></h3>
-                <p id="userJoined1">You joined</p>
                 <ul id="userJoined">
                 </ul>
             </div>
@@ -161,8 +160,30 @@
             </div>
         </section>
     </main>
+    <script defer src="http://localhost:5500/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        const socket = io('http://localhost:5500');
+        const chatDetails = document.getElementById('chatDetails');
+        const text_field = document.getElementById('text-field');
+        const chatForm = document.getElementById('chatForm');
+        document.addEventListener('DOMContentLoaded', () => {
+            const name = localStorage.getItem('name');
+            socket.emit('new-user', name);
+
+            socket.on('chat-message', (data) => {
+                appendMessage(`${data.name}: ${data.message}`);
+            });
+
+            socket.on('user-connected', (name) => {
+                appendMessage(`${name} connected`);
+            });
+
+            socket.on('user-disconnected', (name) => {
+                appendMessage(`${name} disconnected`);
+            });
+        });
         const createButton=document.getElementById('createButton');
         createButton.addEventListener('click',postGroup);
         async function postGroup(e){
@@ -207,6 +228,7 @@
         }
         async function fetchGroup(){
             try{
+
                 const groupId=localStorage.getItem('groupId');
                 const groupName=localStorage.getItem('groupName');
                 const userDetailsButtonId = `userDetailsButton_${groupId}`;
@@ -258,7 +280,6 @@
                             "Authorization": token
                     }
                 });
-                const chatDetails=document.getElementById('chatDetails');
                 chatDetails.innerHTML='';
                 getChat.data.chatDetails.forEach(element=>{
                         const li=document.createElement('li');
@@ -378,17 +399,20 @@
                 console.log(e);
             }
         }
-        const button=document.getElementById('button');
-        button.addEventListener('click',sendMessages);
+        chatForm.addEventListener('submit',sendMessages);
         async function sendMessages(e){
             e.preventDefault();
             try{
+                const message = text_field.value;
+                appendMessage(`You: ${message}`);
+                socket.emit('send-chat-message', message);
+                text_field.value = '';
                 const textChat=document.getElementById('text-field').value;
                 const username=localStorage.getItem('name');
                 const groupId=localStorage.getItem('groupId');
                 const userId=localStorage.getItem('userId');
                 const obj={
-                    Chat:textChat,
+                    Chat:message,
                     Username:username,
                     groupId:groupId,
                     userId:userId
@@ -404,25 +428,16 @@
                             "Authorization":token
                         }
                     })
-                    const chatArray=JSON.parse(localStorage.getItem('chatData')) || [];
-                    const messages={
-                            Chat:textChat,
-                            Username:username,
-                            groupId:groupId,
-                            id:sendChat.data.chatDetails.id
-                    }
-                    chatArray.push(messages);
-                    localStorage.setItem('chatData',JSON.stringify(chatArray));
-                    console.log(sendChat.data.chatDetails.id);
                 }
-                const chatDetails=document.getElementById('chatDetails');
-                const li=document.createElement('li');
-                li.innerHTML=username+": "+textChat;
-                chatDetails.appendChild(li);
                 
             }catch(e){
                 console.log(e);
             }
+        }
+        function appendMessage(message) {
+            const li = document.createElement('li');
+            li.innerHTML = message;
+            chatDetails.append(li);
         }
         document.addEventListener('DOMContentLoaded',showChatMessages);
         async function showChatMessages(e){
@@ -456,50 +471,6 @@
                 console.log(e);
             }
         }
-        async function realTimeChatMessages(){
-            try{
-                const chatMessages = localStorage.getItem('chatData');
-                const parseChatmessages = JSON.parse(chatMessages);
-                const groupId = localStorage.getItem('groupId');
-                const userId = localStorage.getItem('userId');
-                const chatDetails = document.getElementById('chatDetails');
-                if(parseChatmessages){
-                    const token = localStorage.getItem('token');
-                    const getGroupId = await axios.get(`http://localhost:5500/userChat?groupId=${groupId}`, {
-                        headers: {
-                            "Authorization": token
-                        }
-                    });
-                    const lastGroupId = Math.max(...getGroupId.data.chatDetails.map(element => element.id));
-                    const localStorageChatId=Math.max(...parseChatmessages.map(element=>element.id));
-                    if (lastGroupId>localStorageChatId) {
-                        chatDetails.innerHTML = '';
-                        const lastMessage = getGroupId.data.chatDetails.find(element => element.id === lastGroupId);
-                        console.log(lastMessage);
-                        if (lastMessage) {
-                            const obj = {
-                                Username: lastMessage.Username,
-                                Chat: lastMessage.Chat,
-                                groupId: groupId,
-                                id:lastGroupId
-                            };
-
-                            parseChatmessages.push(obj);
-                            parseChatmessages.forEach(element=>{
-                                console.log(element.Chat);
-                                const li = document.createElement('li');
-                                li.innerHTML = element.Username+": "+element.Chat;
-                                chatDetails.appendChild(li);
-                            })
-                            localStorage.setItem('chatData', JSON.stringify(parseChatmessages));
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        setInterval(realTimeChatMessages,20000);
     </script>
 </body>
 </html>
