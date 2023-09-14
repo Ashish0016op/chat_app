@@ -97,13 +97,25 @@
         font-weight: bold;
     }
     .groups{
-        padding: 5px 29px;
         background-color: #007BFF;
         color: white;
         margin-bottom: 4px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
+        height: 26px;
+        width: 100px;
+    }
+    .groupsButton{
+        background-color: #007BFF;
+        color: white;
+        margin-bottom: 4px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .groupsButton:hover{
+        background-color: #0056b3;
     }
     .chat-messages {
         margin-top: 14px;
@@ -120,6 +132,9 @@
                 <h2>Your Groups</h2>
                 <ul id="userGroups">
                 </ul>
+                <hr style="height: 3px; background-color: black;">
+                <h3 id="GroupUsers"></h3>
+                <h3 id="deleteGroup"></h3>
             </section>
             <section class="create-group">
                 <h2>Create a Group</h2>
@@ -175,7 +190,15 @@
                 button.className='groups';
                 button.append(document.createTextNode(groupName));
                 button.addEventListener('click',fetchGroup);
-                
+                const groupObj={
+                    userId:userId,
+                    groupId:groupId
+                }
+                const AdminId=await axios.post('http://localhost:5500/AdminData',groupObj,{
+                    headers:{
+                        "Authorization":token
+                    }
+                })
                 userGroups.appendChild(button);
                 
             }catch(e){
@@ -184,29 +207,64 @@
         }
         async function fetchGroup(){
             try{
+                const groupId=localStorage.getItem('groupId');
                 const groupName=localStorage.getItem('groupName');
+                const userDetailsButtonId = `userDetailsButton_${groupId}`;
+                var buttons = document.getElementsByClassName("groupsButton");
+                for (var i = buttons.length - 1; i >= 0; i--) {
+                    buttons[i].parentNode.removeChild(buttons[i]);
+                }
+                const userDetailsButton = document.getElementById(userDetailsButtonId);
+                if (!userDetailsButton) {
+                    const GroupUsers=document.getElementById('GroupUsers');
+                    const UserDetailsButton=document.createElement('button');
+                    UserDetailsButton.textContent=`${groupName} Users`;
+                    UserDetailsButton.className='groupsButton';
+                    UserDetailsButton.id = userDetailsButtonId;
+                    UserDetailsButton.addEventListener('click',async()=>{
+                        window.location.href="/AllGroupsUsers";
+                    });
+                    const deleteButtons=document.getElementsByClassName('DeleteGroups')
+                    for(let i=deleteButtons.length-1;i>=0;i--){
+                        console.log(deleteButtons[i].parentNode);
+                        deleteGroup.removeChild(deleteButtons[i]);
+                        
+                    }
+                    const token=localStorage.getItem('token');
+                    const userId=localStorage.getItem('userId');
+                    const AdminId=await axios.get(`http://localhost:5500/GetAdminData?userId=${userId}&groupId=${groupId}`,{
+                        headers:{
+                            "Authorization":token
+                        }
+                    })
+                    if (AdminId.data.AdminId && AdminId.data.AdminId.userId){
+                        if(parseInt(userId)===AdminId.data.AdminId.userId && parseInt(groupId)===AdminId.data.AdminId.groupId){
+                            const deleteGroup=document.getElementById('deleteGroup');
+                            const deleteButton=document.createElement('button');
+                            deleteButton.className='DeleteGroups';
+                            deleteButton.textContent='delete group';
+                            deleteButton.addEventListener('click',DeleteGroup);
+                            deleteGroup.appendChild(deleteButton);
+                        }
+                    }
+                    GroupUsers.appendChild(UserDetailsButton);
+                    
+                }
+                const token=localStorage.getItem('token');
                 const userGroupName=document.getElementById('userGroupName');
-                        const inviteButton=document.createElement('button');
-                        inviteButton.textContent='invite';
-                        inviteButton.className='groups'
-                        inviteButton.addEventListener('click',async()=>{
-                            window.location.href="/invite";
-                        })
-                        userGroupName.innerHTML=groupName;
-                        userGroupName.appendChild(inviteButton);
-                        const groupId=localStorage.getItem('groupId');
-                        const getChat = await axios.get(`http://localhost:5500/userChat?groupId=${groupId}`, {
-                            headers: {
-                                "Authorization": token
-                            }
-                        });
-                            const chatDetails=document.getElementById('chatDetails');
-                            chatDetails.innerHTML='';
-                            getChat.data.chatDetails.forEach(element=>{
-                                const li=document.createElement('li');
-                                li.innerHTML=element.Username+": "+element.Chat;
-                                chatDetails.appendChild(li);
-                            })
+                userGroupName.innerHTML=groupName;
+                const getChat = await axios.get(`http://localhost:5500/userChat?groupId=${groupId}`, {
+                    headers: {
+                            "Authorization": token
+                    }
+                });
+                const chatDetails=document.getElementById('chatDetails');
+                chatDetails.innerHTML='';
+                getChat.data.chatDetails.forEach(element=>{
+                        const li=document.createElement('li');
+                        li.innerHTML=element.Username+": "+element.Chat;
+                        chatDetails.appendChild(li);
+                })
             }catch(e){
                 console.log(e);
             }
@@ -216,7 +274,7 @@
         async function getGroup(e){
             e.preventDefault();
             try{
-                const userGroups=document.getElementById('userGroups');
+                
                 const userId=localStorage.getItem('userId');
                 const token=localStorage.getItem('token');
                 const getGroupName=await axios.get(`http://localhost:5500/get_group?userId=${userId}`,{
@@ -225,28 +283,59 @@
                     }
                 })
                 getGroupName.data.group.forEach(element => {
+                    const userGroupName=document.getElementById('userGroupName');
                     const button=document.createElement('button');
                     button.className='groups';
                     button.append(document.createTextNode(element.GroupName));
                     button.addEventListener('click',async()=>{
-                        const userGroupName=document.getElementById('userGroupName');
-                        const inviteButton=document.createElement('button');
-                        inviteButton.textContent='invite';
-                        inviteButton.className='groups'
-                        inviteButton.addEventListener('click',async()=>{
-                            window.location.href="/invite";
-                        })
                         userGroupName.innerHTML=element.GroupName;
-                        userGroupName.appendChild(inviteButton);
+                        localStorage.setItem('groupName',element.GroupName);
                         localStorage.setItem('groupId',element.id);
                         const groupId=localStorage.getItem('groupId');
+                        const userDetailsButtonId = `userDetailsButton_${groupId}`;
+                        var buttons = document.getElementsByClassName("groupsButton");
+                        for (var i = buttons.length - 1; i >= 0; i--) {
+                            buttons[i].parentNode.removeChild(buttons[i]);
+                        }
+                        const userDetailsButton = document.getElementById(userDetailsButtonId);
+                        if (!userDetailsButton) {
+                            const GroupUsers=document.getElementById('GroupUsers');
+                            const UserDetailsButton=document.createElement('button');
+                            UserDetailsButton.textContent=`${element.GroupName} Users`;
+                            UserDetailsButton.className='groupsButton';
+                            UserDetailsButton.id = userDetailsButtonId;
+                            UserDetailsButton.addEventListener('click',async()=>{
+                                window.location.href="/AllGroupsUsers";
+                            });
+                            GroupUsers.appendChild(UserDetailsButton);
+                        }
+                        const deleteButtons=document.getElementsByClassName('DeleteGroups')
+                        for(let i=deleteButtons.length-1;i>=0;i--){
+                            console.log(deleteButtons[i].parentNode);
+                            deleteGroup.removeChild(deleteButtons[i]);
+                            
+                        }
+                        const token=localStorage.getItem('token');
+                        const AdminId=await axios.get(`http://localhost:5500/GetAdminData?userId=${userId}&groupId=${groupId}`,{
+                            headers:{
+                                "Authorization":token
+                            }
+                        })
+                        if (AdminId.data.AdminId && AdminId.data.AdminId.userId){
+                            if(parseInt(userId)===AdminId.data.AdminId.userId && parseInt(groupId)===AdminId.data.AdminId.groupId){
+                                const deleteGroup=document.getElementById('deleteGroup');
+                                const deleteButton=document.createElement('button');
+                                deleteButton.className='DeleteGroups';
+                                deleteButton.textContent='delete group';
+                                deleteButton.addEventListener('click',DeleteGroup);
+                                deleteGroup.appendChild(deleteButton);
+                            }
+                        }
                         const getChat = await axios.get(`http://localhost:5500/userChat?groupId=${groupId}`, {
                             headers: {
                                 "Authorization": token
                             }
                         });
-                        
-                        //localStorage.setItem('name',getChat.data.chatDetails[0].Username)
                         if(userGroupName.innerHTML!==''){
                             const chatDetails=document.getElementById('chatDetails');
                             chatDetails.innerHTML='';
@@ -258,11 +347,35 @@
                         }
                     })
                     userGroups.appendChild(button);
+                    
                     const lineBreak = document.createElement('br');
                     userGroups.appendChild(lineBreak);
                 });
             }catch(e){
                 console.log(e)
+            }
+        }
+        async function DeleteGroup(){
+            try{
+                
+                var ul = document.getElementById("userGroups");
+                const groupName=localStorage.getItem('groupName');
+                var buttons = ul.querySelectorAll("button.groups");
+                buttons.forEach(function(button) {
+                    if (button.textContent === groupName) {
+                        button.parentNode.removeChild(button);
+                    }
+                });
+                const groupId=localStorage.getItem('groupId');
+                const token=localStorage.getItem('token');
+                const GetGroupName=await axios.delete(`http://localhost:5500/deleteGroup?groupId=${groupId}`,{
+                    headers:{
+                        "Authorization":token
+                    }
+                })
+                console.log(GetGroupName);
+            }catch(e){
+                console.log(e);
             }
         }
         const button=document.getElementById('button');
@@ -323,17 +436,8 @@
                         "Authorization":token
                     }
                 })
-                console.log(groupName);
-                const userGroupName=document.getElementById('userGroupName');
-                const inviteButton=document.createElement('button');
-                inviteButton.textContent='invite';
-                inviteButton.className='groups'
-                inviteButton.addEventListener('click',async()=>{
-                    window.location.href="/invite";
-                })
-                        
+                const userGroupName=document.getElementById('userGroupName');        
                 userGroupName.innerHTML=groupName.data.group.GroupName;
-                userGroupName.appendChild(inviteButton);
                 console.log(groupName.data.group.GroupName);
                 const getChat = await axios.get(`http://localhost:5500/userChat?groupId=${groupId}`, {
                     headers: {
@@ -354,7 +458,6 @@
         }
         async function realTimeChatMessages(){
             try{
-                console.log('hellco')
                 const chatMessages = localStorage.getItem('chatData');
                 const parseChatmessages = JSON.parse(chatMessages);
                 const groupId = localStorage.getItem('groupId');
@@ -396,7 +499,7 @@
                 console.error(error);
             }
         }
-        setInterval(realTimeChatMessages,4000);
+        setInterval(realTimeChatMessages,20000);
     </script>
 </body>
 </html>

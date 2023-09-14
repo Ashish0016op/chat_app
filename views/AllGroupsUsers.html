@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+    }
+
+    header {
+        background-color: #007BFF;
+        color: white;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .container {
+        display: flex;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .invite {
+        background-color: #007BFF;
+        color: white;
+        margin-bottom: 4px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        height: 28px;
+        width: 106px;
+        margin-left: 9px;
+    }
+    .invite:hover{
+        background-color: #0056b3;
+    }
+</style>
+<body>
+    <header>
+        <h1>Chat App</h1>
+    </header>
+    <h1 id="inviteUsers"></h1>
+    <h2>All Users</h2>
+    <div class="container">
+        
+        <ul id="AllUsers">
+
+        </ul>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded',getAllUsers);
+        async function getAllUsers(){
+            try{
+                const token=localStorage.getItem('token');
+                const userId=localStorage.getItem('userId');
+                const groupId=localStorage.getItem('groupId');
+                const AdminId=await axios.get(`http://localhost:5500/GetAdminData?userId=${userId}&groupId=${groupId}`,{
+                    headers:{
+                        "Authorization":token
+                    }
+                })
+                if (AdminId.data.AdminId && AdminId.data.AdminId.userId){
+                    if(parseInt(userId)===AdminId.data.AdminId.userId && parseInt(groupId)===AdminId.data.AdminId.groupId){
+                        const inviteUsers=document.getElementById('inviteUsers');
+                        const inviteButton=document.createElement('button');
+                        inviteButton.className='invite';
+                        inviteButton.textContent='invite user';
+                        inviteButton.addEventListener('click',async()=>{
+                            window.location.href="/invite";
+                        })
+                        inviteUsers.appendChild(inviteButton);
+                    }
+                }
+                const getUsers = await axios.get(`http://localhost:5500/userDetails?groupId=${groupId}`, {
+                    headers: {
+                            "Authorization": token
+                    }
+                });
+                const isAdmin = AdminId.data.AdminId && AdminId.data.AdminId.userId &&
+                parseInt(userId) === AdminId.data.AdminId.userId && parseInt(groupId) === AdminId.data.AdminId.groupId;
+                getUsers.data.usersId.forEach(async(element) => {
+                    const id=element.userId;
+                    
+                    const userName=await axios.get(`http://localhost:5500/getUsersDetails?id=${id}`);
+                    const AllUsers=document.getElementById('AllUsers');
+                    const li=document.createElement('li');
+                    li.className='usersName';
+                    li.innerHTML=`${userName.data.userName.Username} - ${userName.data.userName.Email}`;
+
+                    const token=localStorage.getItem('token');
+                    const AdminId=await axios.get(`http://localhost:5500/GetAdminData?userId=${id}&groupId=${element.groupId}`,{
+                        headers:{
+                            "Authorization":token
+                        }
+                    })
+                    if (AdminId.data.AdminId && AdminId.data.AdminId.userId){
+                        console.log('present');
+                        if(id===AdminId.data.AdminId.userId && element.groupId===AdminId.data.AdminId.groupId){
+                            if(element.userId===AdminId.data.AdminId.userId){
+                                const span=document.createElement('span');
+                                span.innerHTML=' - Admin';
+                                span.style.color='blue';
+                                li.appendChild(span);
+                            }
+                        }
+                    }
+
+                    else if(isAdmin){
+                        const makeAdminButton=document.createElement('button');
+                        makeAdminButton.textContent='make admin';
+                        const deleteUser=document.createElement('button');
+                        deleteUser.textContent='remove';
+                        li.appendChild(makeAdminButton);
+                        li.appendChild(deleteUser);
+                        makeAdminButton.addEventListener('click',async()=>{
+                            li.removeChild(makeAdminButton);
+                            li.removeChild(deleteUser);
+                            const adminSpan = document.createElement('span');
+                            adminSpan.innerHTML = ' - Admin';
+                            adminSpan.style.color = 'blue';
+                            li.appendChild(adminSpan);
+                            await makeUserAdmin(id);
+                        })
+                        deleteUser.addEventListener('click',async()=>{
+                            li.remove(deleteUser);
+                            await DeleteUser(id);
+                        })
+                    }
+                    
+                    AllUsers.appendChild(li);
+
+                });
+            }
+            catch(e){
+                console.log(e);
+            }
+        }
+        async function DeleteUser(id){
+            try{
+                const groupId=localStorage.getItem('groupId');
+                const token=localStorage.getItem('token');
+                const response=await axios.delete(`http://localhost:5500/deleteUser?groupId=${groupId}&userId=${id}`,{
+                    headers:{
+                        "Authorization":token
+                    }
+                })
+                console.log(response);
+            }catch(e){
+                console.log(e);
+            }
+        }
+        async function makeUserAdmin(id){
+            try{
+                const groupId=localStorage.getItem('groupId');
+                const groupObj={
+                    userId:id,
+                    groupId:groupId
+                }
+                const token=localStorage.getItem('token');
+                const AdminId=await axios.post('http://localhost:5500/AdminData',groupObj,{
+                    headers:{
+                        "Authorization":token
+                    }
+                })
+            }catch(e){
+                console.log(e);
+            }
+        }
+    </script>
+</body>
+</html>

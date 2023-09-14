@@ -2,6 +2,7 @@ const { sequelize } = require('sequelize'); // Import your Sequelize instance
 const User = require('../model/signUp');
 const Group = require('../model/group');
 const UserGroup = require('../model/userGroup');
+const userGroup = require('../model/userGroup');
 
 exports.addGroup = async (req, res, next) => {
   try {
@@ -84,6 +85,27 @@ exports.getGroup = async (req, res, next) => {
         console.log(e);
     }
   }
+  
+  exports.getUserDetails=async(req,res,next)=>{
+    try{
+        const groupId=req.query.groupId;
+        console.log(groupId);
+        const userDetails=await userGroup.findAll({where:{groupId}});
+        res.status(200).json({usersId:userDetails});
+    }catch(e){
+        console.log(e);
+    }
+}
+exports.deleteGroupName=async(req,res,next)=>{
+  try{
+    const groupId=req.query.groupId;
+    const deleteResponse=await Group.findByPk(groupId);
+    await deleteResponse.destroy();
+    res.status(200).json({deletedGroup:deleteResponse});
+  }catch(e){
+    console.log(e);
+  }
+}
   
   
   

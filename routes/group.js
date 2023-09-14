@@ -6,4 +6,6 @@ router.post('/group',AuthenticateMiddleware.Authentication, groupcontrollers.add
 router.get('/get_group',AuthenticateMiddleware.Authentication,groupcontrollers.getGroup);
 router.get('/get_groupName',AuthenticateMiddleware.Authentication,groupcontrollers.getGroupName);
 router.post('/inviteUser',AuthenticateMiddleware.Authentication,groupcontrollers.joinUser);
+router.get('/userDetails',AuthenticateMiddleware.Authentication,groupcontrollers.getUserDetails);
+router.delete('/deleteGroup',AuthenticateMiddleware.Authentication,groupcontrollers.deleteGroupName);
 module.exports=router;

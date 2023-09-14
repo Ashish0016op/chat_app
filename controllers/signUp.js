@@ -36,3 +36,12 @@ exports.getSignUpDetails=async(req,res,next)=>{
         console.log(err);
     }
 }
+exports.getUsersName=async(req,res,next)=>{
+    try{
+        const userId=req.query.id;
+        const response=await signUpTable.findByPk(userId)
+        res.status(200).json({userName:response});
+    }catch(e){
+        console.log(e);
+    }
+}

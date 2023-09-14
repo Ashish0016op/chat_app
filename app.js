@@ -10,12 +10,15 @@ const signUpRoutes=require('./routes/signUp');
 const loginRoutes=require('./routes/login');
 const chatRoutes=require('./routes/chat');
 const groupRoutes=require('./routes/group');
+const AdminRoutes=require('./routes/Admin');
+const userGroupRoutes=require('./routes/userGroup');
 const { serialize } = require('v8');
 const { Sequelize } = require('sequelize');
 const UserModel=require('./model/signUp');
 const ChatModel=require('./model/chat');
 const groupModel=require('./model/group');
 const userGroupModel=require('./model/userGroup');
+const AdminModel=require('./model/Admin');
 app.use(cors());
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
@@ -23,6 +26,8 @@ app.use(signUpRoutes);
 app.use(loginRoutes);
 app.use(chatRoutes);
 app.use(groupRoutes);
+app.use(AdminRoutes);
+app.use(userGroupRoutes);
 
 app.use('/signUp',(req,res,next)=>{
     res.sendFile(path.join(__dirname,'views','SignUp.html'));
@@ -38,6 +43,9 @@ app.use('/group',(req,res,next)=>{
 })
 app.use('/invite',(req,res,next)=>{
     res.sendFile(path.join(__dirname,'views','invite.html'));
+})
+app.use('/AllGroupsUsers',(req,res,next)=>{
+    res.sendFile(path.join(__dirname,'views','AllGroupsUsers.html'));
 })
 
 ChatModel.belongsTo(UserModel,{foreignKey:'userId'});
