@@ -20,8 +20,25 @@ const userGroupModel = require('./model/userGroup');
 const AdminModel = require('./model/Admin');
 const http = require('http').createServer(app); // Use HTTP server with Express
 const io = require('socket.io')(http); // Attach Socket.io to the HTTP server
-
+const multer=require('multer')
 const users = {};
+
+const storage = multer.diskStorage({
+    destination: './upload/images',
+    filename: (req, file, cb) => {
+        return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
+    }
+})
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 100000
+    }
+})
+app.use('/profile', express.static('upload/images'));
+
+
 
 io.on('connection', (socket) => {
   socket.on('new-user', (name) => {
