@@ -17,4 +17,5 @@ const ChatDetails=sequelize.define('chatData',{
     },
 })
 
-module.exports=ChatDetails;
+  
+  module.exports =ChatDetails;
