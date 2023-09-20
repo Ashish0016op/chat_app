@@ -98,19 +98,21 @@
                     email,
                     password
                 }
-                //console.log(obj);
                 const response=await axios.post('http://localhost:5500/loginData',obj);
                 console.log(response);
                 if(response.data.message==='login successful'){
                     window.alert('login successful');
                     window.location.href="/chat";
                 }
+                else{
+                    window.alert('Incorrect email or password');
+                }
                 localStorage.setItem('token',response.data.token);
                 localStorage.setItem('userId',response.data.userId);
                 localStorage.setItem('name',response.data.Username);
                 localStorage.setItem('email',email);
             }catch(error){
-                if (error.response && error.response.status === 500) {
+                if (error.response && error.response.status === 401) {
                     window.alert('Incorrect email or password');
                 }
             }

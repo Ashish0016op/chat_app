@@ -23,7 +23,6 @@ exports.getAdmin=async(req,res,next)=>{
               groupId: gId
             }
           });
-        console.log(response);
         res.status(200).json({AdminId:response});
     }catch(e){
         console.log(e);

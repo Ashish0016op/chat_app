@@ -47,7 +47,7 @@ exports.getGroup = async (req, res, next) => {
         include: [
           {
             model: Group,
-            through: UserGroup // Use the name of your junction table here
+            through: UserGroup
           },
         ],
       });
@@ -56,8 +56,7 @@ exports.getGroup = async (req, res, next) => {
         return res.status(404).json({ message: 'User not found', success: false });
       }
   
-      // Access the associated groups using the pluralized form of your groupModel variable
-      const userAssociatedGroups = user.groups; // Use the plural form of your Group model variable
+      const userAssociatedGroups = user.groups;
       res.status(200).json({group: userAssociatedGroups, success: true });
     } catch (err) {
       console.error(err);

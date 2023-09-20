@@ -135,6 +135,7 @@
                 <hr style="height: 3px; background-color: black;">
                 <h3 id="GroupUsers"></h3>
                 <h3 id="deleteGroup"></h3>
+                    
             </section>
             <section class="create-group">
                 <h2>Create a Group</h2>
@@ -168,62 +169,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const form = document.querySelector('form');
-        const messageDiv = document.getElementById('message');
+        // const form = document.querySelector('form');
+        // const messageDiv = document.getElementById('message');
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // form.addEventListener('submit', async (e) => {
+        //     e.preventDefault();
 
-            const formData = new FormData(form);
-            try {
-                const token=localStorage.getItem('token');
-                console.log(token);
-                const response = await fetch('http://localhost:5500/upload', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        "Authorization": token
-                    }
-                });
+        //     const formData = new FormData(form);
+        //     try {
+        //         const token=localStorage.getItem('token');
+        //         console.log(token);
+        //         const response = await fetch('http://localhost:5500/upload', {
+        //             method: 'POST',
+        //             body: formData,
+        //             headers: {
+        //                 "Authorization": token
+        //             }
+        //         });
 
-                const data = await response.json();
+        //         const data = await response.json();
 
-                if (data.success === 1) {
-                    const chatDetails=document.getElementById('chatDetails')
-                    const imageUrl = data.profile_url;
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.alt = 'Uploaded Image';
-                    //imageContainer.innerHTML = ''; // Clear previous images
-                    chatDetails.appendChild(img);
-                } else {
-                    messageDiv.innerHTML = `<p>Upload failed: ${data.message}</p>`;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.innerHTML = '<p>An error occurred while uploading.</p>';
-            }
-        });
+        //         if (data.success === 1) {
+        //             const chatDetails=document.getElementById('chatDetails')
+        //             const imageUrl = data.profile_url;
+        //             const img = document.createElement('img');
+        //             img.src = imageUrl;
+        //             img.alt = 'Uploaded Image';
+        //             //imageContainer.innerHTML = ''; // Clear previous images
+        //             chatDetails.appendChild(img);
+        //         } else {
+        //             messageDiv.innerHTML = `<p>Upload failed: ${data.message}</p>`;
+        //         }
+        //     } catch (error) {
+        //         console.error('Error:', error);
+        //         messageDiv.innerHTML = '<p>An error occurred while uploading.</p>';
+        //     }
+        // });
         const socket = io('http://localhost:5500');
         const chatDetails = document.getElementById('chatDetails');
         const text_field = document.getElementById('text-field');
         const chatForm = document.getElementById('chatForm');
-        document.addEventListener('DOMContentLoaded', () => {
-            const name = localStorage.getItem('name');
-            socket.emit('new-user', name);
-
-            socket.on('chat-message', (data) => {
-                appendMessage(`${data.name}: ${data.message}`);
-            });
-
-            socket.on('user-connected', (name) => {
-                appendMessage(`${name} connected`);
-            });
-
-            socket.on('user-disconnected', (name) => {
-                appendMessage(`${name} disconnected`);
-            });
-        });
         const createButton=document.getElementById('createButton');
         createButton.addEventListener('click',postGroup);
         async function postGroup(e){
@@ -261,15 +246,59 @@
                     }
                 })
                 userGroups.appendChild(button);
+                location.reload();
                 
             }catch(e){
                 console.log(e);
             }
         }
+        let isConnected = false;
+        async function realtimeChat(){
+            try{
+                isConnected=true;
+                console.log('c')
+                    const name = localStorage.getItem('name');
+                    const groupId = localStorage.getItem('groupId');
+                    const data = {
+                        name: name,
+                        groupId: groupId
+                    };
+                    
+                    socket.emit('new-user', data);
+                        
+
+                    socket.on('send-chat-message', (data) => {
+                        const groupId = localStorage.getItem('groupId');
+                        socket.emit('send-chat-message', { message: data.message, groupId: groupId });
+                    });
+                    socket.on('chat-message', (data) => {
+                        appendMessage(`${data.name}: ${data.message}`);
+                    });
+                    socket.on('user-connected', (data) => {
+                        console.log(data.name);
+                        if (data.groupId === groupId) {
+                            const connectedMessage = `${data.name} connected`;
+                            appendMessage(connectedMessage);
+                        }
+                    });
+                    socket.on('user-disconnected', (data) => {
+                        if (data.groupId === groupId) {
+                            const disconnectedMessage = `${data.name} disconnected`;
+                            appendMessage(disconnectedMessage);
+                        }
+                    });
+                }
+                catch(e){
+                    console.log(e);
+                }
+        }
         async function fetchGroup(){
             try{
-
-                const groupId=localStorage.getItem('groupId');
+                const name = localStorage.getItem('name');
+                const groupId = localStorage.getItem('groupId');
+                if(isConnected===false){
+                    await realtimeChat();
+                }
                 const groupName=localStorage.getItem('groupName');
                 const userDetailsButtonId = `userDetailsButton_${groupId}`;
                 var buttons = document.getElementsByClassName("groupsButton");
@@ -322,9 +351,11 @@
                 });
                 chatDetails.innerHTML='';
                 getChat.data.chatDetails.forEach(element=>{
+                    if(groupId===element.groupId){
                         const li=document.createElement('li');
                         li.innerHTML=element.Username+": "+element.Chat;
                         chatDetails.appendChild(li);
+                    }
                 })
             }catch(e){
                 console.log(e);
@@ -353,6 +384,11 @@
                         localStorage.setItem('groupName',element.GroupName);
                         localStorage.setItem('groupId',element.id);
                         const groupId=localStorage.getItem('groupId');
+                        const name=localStorage.getItem('name');
+                        if(isConnected===false){
+                            await realtimeChat();
+                        }
+
                         const userDetailsButtonId = `userDetailsButton_${groupId}`;
                         var buttons = document.getElementsByClassName("groupsButton");
                         for (var i = buttons.length - 1; i >= 0; i--) {
@@ -376,6 +412,7 @@
                             deleteGroup.removeChild(deleteButtons[i]);
                             
                         }
+                        
                         const token=localStorage.getItem('token');
                         const AdminId=await axios.get(`http://localhost:5500/GetAdminData?userId=${userId}&groupId=${groupId}`,{
                             headers:{
@@ -401,9 +438,10 @@
                             const chatDetails=document.getElementById('chatDetails');
                             chatDetails.innerHTML='';
                             getChat.data.chatDetails.forEach(element=>{
-                                const li=document.createElement('li');
-                                li.innerHTML=element.Username+": "+element.Chat;
-                                chatDetails.appendChild(li);
+                                    const li=document.createElement('li');
+                                    li.innerHTML=element.Username+": "+element.Chat;
+                                    chatDetails.appendChild(li);
+                                
                             })
                         }
                     })
@@ -418,7 +456,10 @@
         }
         async function DeleteGroup(){
             try{
-                
+                const GroupUsers=document.getElementById('GroupUsers');
+                GroupUsers.remove()
+                const deleteGroup=document.getElementById('deleteGroup');
+                deleteGroup.remove();
                 var ul = document.getElementById("userGroups");
                 const groupName=localStorage.getItem('groupName');
                 var buttons = ul.querySelectorAll("button.groups");
@@ -434,51 +475,63 @@
                         "Authorization":token
                     }
                 })
+                localStorage.removeItem('groupId');
                 console.log(GetGroupName);
+                location.reload()
             }catch(e){
                 console.log(e);
             }
         }
-        chatForm.addEventListener('submit',sendMessages);
-        async function sendMessages(e){
+        chatForm.addEventListener('submit', sendMessages);
+
+        async function sendMessages(e) {
             e.preventDefault();
-            try{
+            try {
+                const groupId = localStorage.getItem('groupId');
                 const message = text_field.value;
-                appendMessage(`You: ${message}`);
-                socket.emit('send-chat-message', message);
-                text_field.value = '';
-                const textChat=document.getElementById('text-field').value;
-                const username=localStorage.getItem('name');
-                const groupId=localStorage.getItem('groupId');
-                const userId=localStorage.getItem('userId');
-                const obj={
-                    Chat:message,
-                    Username:username,
-                    groupId:groupId,
-                    userId:userId
-                }
-                
-                const token=localStorage.getItem('token');
-                const userGroupName=document.getElementById('userGroupName');
-                if(userGroupName.innerHTML===''){
-                    console.log('error');
-                }else{
-                    const sendChat=await axios.post('http://localhost:5500/chatDetails',obj,{
-                        headers:{
-                            "Authorization":token
+                const username = localStorage.getItem('name');
+                const userId = localStorage.getItem('userId');
+                var ul = document.getElementById("userGroups");
+                const groupName=localStorage.getItem('groupName');
+                var buttons = ul.querySelectorAll("button.groups");
+                buttons.forEach(async function(button) {
+                    if(button.textContent===groupName){
+                        if (groupId && message) {
+                            socket.emit('send-chat-message', { message, groupId });
+                            const chatDetailsObj = {
+                                Chat: message,
+                                Username: username,
+                                groupId: groupId,
+                                userId: userId,
+                            };
+
+                            const token = localStorage.getItem('token');
+                            const userGroupName = document.getElementById('userGroupName');
+
+                            if (userGroupName.innerHTML !== '') {
+                                const sendChat = await axios.post('http://localhost:5500/chatDetails', chatDetailsObj, {
+                                    headers: {
+                                        Authorization: token,
+                                    },
+                                });
+                                console.log('Chat details sent:', sendChat.data);
+                            }
                         }
-                    })
-                }
-                
-            }catch(e){
-                console.log(e);
+                    }
+                });
+                text_field.value = '';
+            } catch (e) {
+                console.error('Error:', e);
             }
         }
+
         function appendMessage(message) {
             const li = document.createElement('li');
             li.innerHTML = message;
-            chatDetails.append(li);
+            chatDetails.appendChild(li);
+            chatDetails.scrollTop = chatDetails.scrollHeight;
         }
+
         document.addEventListener('DOMContentLoaded',showChatMessages);
         async function showChatMessages(e){
             e.preventDefault();
@@ -501,10 +554,13 @@
                 });
                 if(userGroupName.innerHTML!==''){
                     getChat.data.chatDetails.forEach(element=>{
-                        const chatDetails=document.getElementById('chatDetails');
-                        const li=document.createElement('li');
-                        li.innerHTML=element.Username+": "+element.Chat;
-                        chatDetails.appendChild(li);
+                        if(groupId===element.groupId){
+                            const chatDetails=document.getElementById('chatDetails');
+                            const li=document.createElement('li');
+                            li.innerHTML=element.Username+": "+element.Chat;
+                            chatDetails.appendChild(li);
+                        }
+                        
                     })
                 }
             }catch(e){

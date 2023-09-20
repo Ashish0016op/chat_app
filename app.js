@@ -18,10 +18,9 @@ const ChatModel = require('./model/chat');
 const groupModel = require('./model/group');
 const userGroupModel = require('./model/userGroup');
 const AdminModel = require('./model/Admin');
-const http = require('http').createServer(app); // Use HTTP server with Express
-const io = require('socket.io')(http); // Attach Socket.io to the HTTP server
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 const multer=require('multer')
-const users = {};
 
 const storage = multer.diskStorage({
     destination: './upload/images',
@@ -39,26 +38,30 @@ const upload = multer({
 app.use('/profile', express.static('upload/images'));
 
 
-
+const users = {};
 io.on('connection', (socket) => {
-  socket.on('new-user', (name) => {
-    users[socket.id] = name;
-    socket.broadcast.emit('user-connected', name);
+  socket.on('new-user', (data) => {
+    const { name, groupId } = data;
+    socket.join(groupId);
+    users[socket.id] = { name, groupId };
+    socket.to(groupId).emit('user-connected', { name, groupId });
   });
 
-  socket.on('send-chat-message', (message) => {
-    socket.broadcast.emit('chat-message', { message: message, name: users[socket.id] });
+  socket.on('send-chat-message', (data) => {
+    const { message, groupId } = data;
+    io.to(groupId).emit('chat-message', { message, name: users[socket.id].name, groupId });
   });
 
   socket.on('disconnect', () => {
-    socket.broadcast.emit('user-disconnected', users[socket.id]);
-    delete users[socket.id];
+    if (users[socket.id]) {
+      const { name, groupId } = users[socket.id];
+      socket.to(groupId).emit('user-disconnected', { name, groupId });
+      delete users[socket.id];
+    }
   });
 });
-
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:5500');
-  // Add other CORS headers as needed
   next();
 });
 

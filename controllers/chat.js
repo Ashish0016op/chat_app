@@ -1,14 +1,12 @@
 const chatTable=require('../model/chat');
 const signUpDetails=require('../model/signUp');
 
-const s3 = require('../s3'); // Import the configured S3 instance
+const s3 = require('../s3');
 
 exports.uploadData = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
-
-    // Handle the uploaded file, if needed
 
     res.status(200).json({ message: 'File uploaded successfully' });
 };
