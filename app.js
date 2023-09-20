@@ -1,10 +1,10 @@
 const express = require('express');
+const dotenv = require('dotenv');
+dotenv.config();
 const sequelize = require('./util/database');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
 const app = express();
 const signUpRoutes = require('./routes/signUp');
 const loginRoutes = require('./routes/login');
